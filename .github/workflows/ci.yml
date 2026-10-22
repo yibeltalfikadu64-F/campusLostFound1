@@ -1,0 +1,69 @@
+name: Continuous Integration
+
+on:
+  push:
+    branches: [main, master, develop]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  backend-checks:
+    name: Backend Build, Lint & Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'npm'
+
+      - name: Install backend dependencies
+        run: |
+          cd backend
+          npm ci
+
+      - name: Generate Prisma client
+        run: |
+          cd backend
+          npx prisma generate
+
+      - name: Typecheck backend
+        run: |
+          cd backend
+          npm run typecheck
+
+      - name: Run backend tests
+        run: |
+          cd backend
+          npm test
+
+  mobile-checks:
+    name: Mobile Typecheck & Validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'npm'
+
+      - name: Install mobile dependencies
+        run: |
+          cd mobile
+          npm ci
+
+      - name: Typecheck mobile app
+        run: |
+          cd mobile
+          npm run typecheck
+
+      - name: Run mobile tests
+        run: |
+          cd mobile
+          npm test

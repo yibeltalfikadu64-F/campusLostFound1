@@ -1,0 +1,215 @@
+{
+  "info": {
+    "name": "Injibara Campus Lost & Found API",
+    "description": "Production API collection for Injibara University Campus Lost & Found system.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5000/api/v1",
+      "type": "string"
+    },
+    {
+      "key": "accessToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "refreshToken",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "request": {
+        "method": "GET",
+        "url": { "raw": "{{baseUrl}}/health", "host": ["{{baseUrl}}"], "path": ["health"] }
+      }
+    },
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register User",
+          "request": {
+            "method": "POST",
+            "url": { "raw": "{{baseUrl}}/auth/register", "host": ["{{baseUrl}}"], "path": ["auth", "register"] },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Dawit Tadesse\",\n  \"email\": \"dawit@injibara.edu.et\",\n  \"universityId\": \"UGR/14022/14\",\n  \"phone\": \"+251911223344\",\n  \"department\": \"Computer Science\",\n  \"password\": \"SecurePass123!\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Login User",
+          "request": {
+            "method": "POST",
+            "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"] },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"identifier\": \"dawit@injibara.edu.et\",\n  \"password\": \"SecurePass123!\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Refresh Token",
+          "request": {
+            "method": "POST",
+            "url": { "raw": "{{baseUrl}}/auth/refresh", "host": ["{{baseUrl}}"], "path": ["auth", "refresh"] },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "url": { "raw": "{{baseUrl}}/auth/logout", "host": ["{{baseUrl}}"], "path": ["auth", "logout"] },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Items",
+      "item": [
+        {
+          "name": "List Items",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/items?limit=20&page=1",
+              "host": ["{{baseUrl}}"],
+              "path": ["items"],
+              "query": [
+                { "key": "limit", "value": "20" },
+                { "key": "page", "value": "1" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Lost / Found Item",
+          "request": {
+            "method": "POST",
+            "url": { "raw": "{{baseUrl}}/items", "host": ["{{baseUrl}}"], "path": ["items"] },
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"FOUND\",\n  \"title\": \"Blue Samsung Galaxy Phone\",\n  \"description\": \"Found on 2nd floor library reading desk.\",\n  \"categoryId\": \"<CATEGORY_UUID>\",\n  \"locationId\": \"<LOCATION_UUID>\",\n  \"dateEvent\": \"2026-10-22T10:00:00.000Z\",\n  \"color\": \"Blue\",\n  \"brand\": \"Samsung\",\n  \"hiddenDetail\": \"Dog wallpaper and Messi sticker\",\n  \"keptAt\": \"SECURITY_OFFICE\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Get Item Details",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/items/:id", "host": ["{{baseUrl}}"], "path": ["items", ":id"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Claims",
+      "item": [
+        {
+          "name": "Submit Ownership Claim",
+          "request": {
+            "method": "POST",
+            "url": { "raw": "{{baseUrl}}/items/:id/claims", "host": ["{{baseUrl}}"], "path": ["items", ":id", "claims"] },
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"proofDescription\": \"This is my Samsung A54 phone, I left it at the library.\",\n  \"verificationAnswers\": \"Lockscreen is my dog and there is a football sticker on the back\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Approve Claim (Security Officer)",
+          "request": {
+            "method": "PATCH",
+            "url": { "raw": "{{baseUrl}}/claims/:id/approve", "host": ["{{baseUrl}}"], "path": ["claims", ":id", "approve"] },
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reviewNote\": \"Evidence verified against secret clues.\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Schedule Handover",
+          "request": {
+            "method": "PATCH",
+            "url": { "raw": "{{baseUrl}}/claims/:id/handover", "host": ["{{baseUrl}}"], "path": ["claims", ":id", "handover"] },
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"handoverLocation\": \"Campus Security Office #104\",\n  \"handoverAt\": \"2026-10-23T14:00:00.000Z\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Confirm Return",
+          "request": {
+            "method": "PATCH",
+            "url": { "raw": "{{baseUrl}}/claims/:id/confirm-return", "host": ["{{baseUrl}}"], "path": ["claims", ":id", "confirm-return"] },
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin",
+      "item": [
+        {
+          "name": "Get Dashboard Statistics",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/admin/stats", "host": ["{{baseUrl}}"], "path": ["admin", "stats"] },
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }]
+          }
+        },
+        {
+          "name": "List Users",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/admin/users", "host": ["{{baseUrl}}"], "path": ["admin", "users"] },
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }]
+          }
+        },
+        {
+          "name": "Claims Queue",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/admin/claims", "host": ["{{baseUrl}}"], "path": ["admin", "claims"] },
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }]
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "name": "injibara-campus-lost-found",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Injibara University Campus Lost and Found Full-Stack Monorepo",
+  "workspaces": [
+    "backend",
+    "mobile"
+  ],
+  "scripts": {
+    "dev": "npm run dev:backend",
+    "dev:all": "concurrently \"npm run dev:backend\" \"npm run dev:mobile\"",
+    "dev:mobile": "npm --workspace=mobile run start",
+    "dev:backend": "npm --workspace=backend run dev",
+    "build": "npm --workspace=backend run build",
+    "typecheck": "npm --workspace=backend run typecheck && npm --workspace=mobile run typecheck",
+    "lint": "npm --workspace=backend run lint && npm --workspace=mobile run lint",
+    "test": "npm --workspace=backend run test && npm --workspace=mobile run test",
+    "db:generate": "npm --workspace=backend run db:generate",
+    "db:migrate": "npm --workspace=backend run db:migrate",
+    "db:seed": "npm --workspace=backend run db:seed",
+    "db:studio": "npm --workspace=backend run db:studio"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
