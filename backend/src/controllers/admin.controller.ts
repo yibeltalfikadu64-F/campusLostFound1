@@ -1,4 +1,4 @@
-import { Response, NextFunction } from 'express';
+﻿import { Response, NextFunction } from 'express';
 import { AuthenticatedRequest } from '../types';
 import { adminService } from '../services/admin.service';
 import { sendSuccess } from '../utils/response';
@@ -9,7 +9,7 @@ export class AdminController {
       const stats = await adminService.getDashboardStats();
       return sendSuccess(res, stats, 'Dashboard statistics retrieved');
     } catch (error) {
-      next(error);
+      return next(error);
     }
   }
 
@@ -18,7 +18,7 @@ export class AdminController {
       const result = await adminService.listUsers(req.query as any);
       return sendSuccess(res, result.users, 'Users retrieved', 200, result.meta);
     } catch (error) {
-      next(error);
+      return next(error);
     }
   }
 
@@ -27,7 +27,7 @@ export class AdminController {
       const updated = await adminService.updateUserStatus(req.params.id, req.user!, req.body);
       return sendSuccess(res, updated, 'User status updated successfully');
     } catch (error) {
-      next(error);
+      return next(error);
     }
   }
 
@@ -36,7 +36,7 @@ export class AdminController {
       const result = await adminService.listAdminClaims(req.query as any);
       return sendSuccess(res, result.claims, 'Admin claims queue retrieved', 200, result.meta);
     } catch (error) {
-      next(error);
+      return next(error);
     }
   }
 
@@ -47,7 +47,7 @@ export class AdminController {
       const result = await adminService.getAuditLogs(page, limit);
       return sendSuccess(res, result.logs, 'Audit logs retrieved', 200, result.meta);
     } catch (error) {
-      next(error);
+      return next(error);
     }
   }
 
@@ -56,9 +56,10 @@ export class AdminController {
       const result = await adminService.moderateItem(req.params.id, req.user!, req.body);
       return sendSuccess(res, result, 'Item moderated successfully');
     } catch (error) {
-      next(error);
+      return next(error);
     }
   }
 }
 
 export const adminController = new AdminController();
+

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -6,138 +6,305 @@ import {
   FlatList,
   RefreshControl,
   TouchableOpacity,
-  ScrollView
-} from 'react-native';
-import { useRouter } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
-import { useQuery } from '@tanstack/react-query';
-import { colors, typography, spacing, borderRadius, shadows } from '../../src/theme';
-import { api } from '../../src/api/endpoints';
-import { useAuth } from '../../src/features/auth/AuthContext';
-import { useI18n } from '../../src/i18n';
-import { ItemCard, ItemCardData } from '../../src/components/common/ItemCard';
-import { CategoryChip } from '../../src/components/common/CategoryChip';
-import { LoadingSpinner } from '../../src/components/common/LoadingSpinner';
-import { EmptyState } from '../../src/components/common/EmptyState';
-import { ErrorState } from '../../src/components/common/ErrorState';
+  ScrollView,
+  useWindowDimensions,
+} from "react-native";
+import { useRouter } from "expo-router";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { Ionicons } from "@expo/vector-icons";
+import { useQuery } from "@tanstack/react-query";
+
+import {
+  colors,
+  typography,
+  spacing,
+  borderRadius,
+  shadows,
+} from "../../src/theme";
+import { api } from "../../src/api/endpoints";
+import { useAuth } from "../../src/features/auth/AuthContext";
+import { useI18n } from "../../src/i18n";
+import { ItemCard, ItemCardData } from "../../src/components/common/ItemCard";
+import { CategoryChip } from "../../src/components/common/CategoryChip";
+import { LoadingSpinner } from "../../src/components/common/LoadingSpinner";
+import { EmptyState } from "../../src/components/common/EmptyState";
+import { ErrorState } from "../../src/components/common/ErrorState";
 
 export default function HomeScreen() {
   const router = useRouter();
   const { user } = useAuth();
   const { t } = useI18n();
+  const { width } = useWindowDimensions();
+
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
-  // Fetch recent categories
+  const isWideScreen = width >= 900;
+  const isTablet = width >= 600 && width < 900;
+  const horizontalPadding = width >= 900 ? 36 : width >= 600 ? 24 : 16;
+
   const { data: categoriesData } = useQuery({
-    queryKey: ['categories'],
-    queryFn: () => api.categories.list()
+    queryKey: ["categories"],
+    queryFn: () => api.categories.list(),
   });
 
-  // Fetch items feed
   const {
     data: itemsData,
     isLoading,
     isError,
     error,
     refetch,
-    isRefetching
+    isRefetching,
   } = useQuery({
-    queryKey: ['items', selectedCategory],
+    queryKey: ["items", selectedCategory],
     queryFn: () =>
       api.items.list({
         limit: 20,
-        categoryId: selectedCategory || undefined
-      })
+        categoryId: selectedCategory || undefined,
+      }),
   });
 
-  // Fetch quick stats
   const { data: statsData } = useQuery({
-    queryKey: ['public-stats'],
+    queryKey: ["public-stats"],
     queryFn: () => api.items.list({ limit: 1 }),
-    staleTime: 60000
+    staleTime: 60000,
   });
 
   const categories = categoriesData?.data || [];
   const items: ItemCardData[] = itemsData?.data || [];
-  const totalCount = statsData?.meta?.total || items.length;
+  const totalCount =
+    statsData?.meta?.total ?? itemsData?.meta?.total ?? items.length;
+
+  const firstName = user?.fullName?.trim().split(/\s+/)[0] || "Student";
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <SafeAreaView style={styles.container} edges={["top"]}>
       <FlatList
+        key={isWideScreen ? "wide" : isTablet ? "tablet" : "mobile"}
         data={items}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
-          <ItemCard
-            item={item}
-            onPress={() => router.push(`/items/${item.id}` as any)}
-          />
+          <View
+            style={[
+              styles.itemWrapper,
+              isWideScreen && styles.itemWrapperWide,
+              isTablet && styles.itemWrapperTablet,
+            ]}
+          >
+            <ItemCard
+              item={item}
+              onPress={() => router.push(`/items/${item.id}` as any)}
+            />
+          </View>
         )}
-        contentContainerStyle={styles.listContent}
+        numColumns={isWideScreen ? 3 : isTablet ? 2 : 1}
+        columnWrapperStyle={width >= 600 ? styles.itemRow : undefined}
+        contentContainerStyle={[
+          styles.listContent,
+          { paddingHorizontal: horizontalPadding },
+        ]}
         refreshControl={
           <RefreshControl
             refreshing={isRefetching}
             onRefresh={refetch}
+            tintColor={colors.primary}
             colors={[colors.primary]}
           />
         }
         ListHeaderComponent={
-          <>
-            {/* Top Welcome Header */}
+          <View style={[styles.content, isWideScreen && styles.contentWide]}>
+            {/* Welcome header */}
             <View style={styles.header}>
-              <View>
-                <Text style={styles.greeting}>
-                  Hello, {user?.fullName?.split(' ')[0] || 'Student'} 👋
-                </Text>
-                <Text style={styles.uniTag}>Injibara University Campus</Text>
+              <View style={styles.brandRow}>
+                <View style={styles.brandIcon}>
+                  <Ionicons name="school-outline" size={25} color="#FFFFFF" />
+                </View>
+
+                <View style={styles.brandTextContainer}>
+                  <Text style={styles.brandName}>Injibara University</Text>
+                  <Text style={styles.brandSubtitle}>CAMPUS LOST & FOUND</Text>
+                </View>
               </View>
+
               <TouchableOpacity
-                onPress={() => router.push('/(tabs)/profile')}
+                accessibilityRole="button"
+                accessibilityLabel="Open profile"
+                onPress={() => router.push("/(tabs)/profile")}
                 style={styles.avatarButton}
+                activeOpacity={0.75}
               >
-                <Ionicons name="person-circle" size={40} color={colors.primary} />
+                <Ionicons
+                  name="person-circle-outline"
+                  size={38}
+                  color={colors.primary}
+                />
               </TouchableOpacity>
             </View>
 
-            {/* Quick Search Shortcut Bar */}
-            <TouchableOpacity
-              activeOpacity={0.9}
-              onPress={() => router.push('/(tabs)/search')}
-              style={styles.searchBar}
-            >
-              <Ionicons name="search-outline" size={20} color={colors.textSecondary} />
-              <Text style={styles.searchPlaceholder}>{t.common.search}</Text>
-              <Ionicons name="options-outline" size={20} color={colors.primary} />
-            </TouchableOpacity>
+            {/* Welcome banner */}
+            <View style={styles.hero}>
+              <View style={styles.heroCopy}>
+                <View style={styles.heroEyebrow}>
+                  <Ionicons name="heart-outline" size={14} color="#D7E9FF" />
+                  <Text style={styles.heroEyebrowText}>
+                    OUR CAMPUS, OUR COMMUNITY
+                  </Text>
+                </View>
 
-            {/* Quick Action & Stats Banner */}
-            <View style={styles.statsBanner}>
-              <View style={styles.statsCol}>
-                <Text style={styles.statsNumber}>{totalCount}</Text>
-                <Text style={styles.statsLabel}>Total Reports</Text>
+                <Text style={styles.heroTitle}>Hello, {firstName}! 👋</Text>
+
+                <Text style={styles.heroDescription}>
+                  Lost something or found an item? Let’s help it find its way
+                  home.
+                </Text>
+
+                <View style={styles.heroActions}>
+                  <TouchableOpacity
+                    accessibilityRole="button"
+                    onPress={() => router.push("/(tabs)/report")}
+                    style={styles.heroPrimaryButton}
+                    activeOpacity={0.85}
+                  >
+                    <Ionicons
+                      name="add-circle-outline"
+                      size={19}
+                      color={colors.primary}
+                    />
+                    <Text style={styles.heroPrimaryText}>Report an item</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    accessibilityRole="button"
+                    onPress={() => router.push("/(tabs)/search")}
+                    style={styles.heroSecondaryButton}
+                    activeOpacity={0.85}
+                  >
+                    <Text style={styles.heroSecondaryText}>Browse items</Text>
+                    <Ionicons name="arrow-forward" size={16} color="#FFFFFF" />
+                  </TouchableOpacity>
+                </View>
               </View>
-              <View style={styles.statsDivider} />
-              <View style={styles.statsActions}>
-                <TouchableOpacity
-                  style={[styles.quickButton, { backgroundColor: colors.lostTagBg }]}
-                  onPress={() => router.push('/(tabs)/report')}
-                >
-                  <Ionicons name="help-buoy-outline" size={16} color={colors.lostTag} />
-                  <Text style={[styles.quickButtonText, { color: colors.lostTag }]}>Report Lost</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.quickButton, { backgroundColor: colors.foundTagBg }]}
-                  onPress={() => router.push('/(tabs)/report')}
-                >
-                  <Ionicons name="shield-checkmark-outline" size={16} color={colors.foundTag} />
-                  <Text style={[styles.quickButtonText, { color: colors.foundTag }]}>Report Found</Text>
-                </TouchableOpacity>
+
+              <View style={styles.heroIllustration}>
+                <View style={styles.heroCircle}>
+                  <Ionicons name="search-outline" size={48} color="#FFFFFF" />
+                  <View style={styles.heroCheck}>
+                    <Ionicons
+                      name="checkmark"
+                      size={18}
+                      color={colors.primary}
+                    />
+                  </View>
+                </View>
               </View>
             </View>
 
-            {/* Category horizontal pills */}
+            {/* Search shortcut */}
+            <TouchableOpacity
+              accessibilityRole="button"
+              accessibilityLabel="Search lost and found items"
+              activeOpacity={0.85}
+              onPress={() => router.push("/(tabs)/search")}
+              style={styles.searchBar}
+            >
+              <Ionicons
+                name="search-outline"
+                size={21}
+                color={colors.textSecondary}
+              />
+              <Text style={styles.searchPlaceholder}>
+                Search phones, bags, keys...
+              </Text>
+              <View style={styles.filterIcon}>
+                <Ionicons
+                  name="options-outline"
+                  size={20}
+                  color={colors.primary}
+                />
+              </View>
+            </TouchableOpacity>
+
+            {/* Statistics */}
+            <View style={styles.statsSection}>
+              <View style={styles.sectionHeadingRow}>
+                <Text style={styles.sectionTitle}>Campus overview</Text>
+                <View style={styles.liveBadge}>
+                  <View style={styles.liveDot} />
+                  <Text style={styles.liveBadgeText}>Community</Text>
+                </View>
+              </View>
+
+              <View style={styles.statsGrid}>
+                <View style={styles.statCard}>
+                  <View
+                    style={[styles.statIcon, { backgroundColor: "#EAF1FF" }]}
+                  >
+                    <Ionicons
+                      name="documents-outline"
+                      size={21}
+                      color="#2859B8"
+                    />
+                  </View>
+                  <Text style={styles.statNumber}>{totalCount}</Text>
+                  <Text style={styles.statLabel}>Total reports</Text>
+                </View>
+
+                <View style={styles.statCard}>
+                  <View
+                    style={[styles.statIcon, { backgroundColor: "#FFF0E9" }]}
+                  >
+                    <Ionicons name="search-outline" size={21} color="#C45B2C" />
+                  </View>
+                  <Text style={styles.statActionTitle}>Lost something?</Text>
+                  <Text style={styles.statActionDescription}>
+                    Report it to campus
+                  </Text>
+                  <TouchableOpacity
+                    onPress={() => router.push("/(tabs)/report")}
+                    style={styles.statActionLink}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={styles.statActionLinkText}>Report lost</Text>
+                    <Ionicons name="arrow-forward" size={14} color="#C45B2C" />
+                  </TouchableOpacity>
+                </View>
+
+                <View style={styles.statCard}>
+                  <View
+                    style={[styles.statIcon, { backgroundColor: "#E4F8EE" }]}
+                  >
+                    <Ionicons
+                      name="hand-left-outline"
+                      size={21}
+                      color="#168455"
+                    />
+                  </View>
+                  <Text style={styles.statActionTitle}>Found something?</Text>
+                  <Text style={styles.statActionDescription}>
+                    Help reunite its owner
+                  </Text>
+                  <TouchableOpacity
+                    onPress={() => router.push("/(tabs)/report")}
+                    style={styles.statActionLink}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={styles.foundActionText}>Report found</Text>
+                    <Ionicons name="arrow-forward" size={14} color="#168455" />
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+
+            {/* Categories */}
             <View style={styles.categorySection}>
-              <Text style={styles.sectionTitle}>{t.items.categories}</Text>
+              <View style={styles.sectionHeadingRow}>
+                <Text style={styles.sectionTitle}>{t.items.categories}</Text>
+                <Ionicons
+                  name="grid-outline"
+                  size={19}
+                  color={colors.textSecondary}
+                />
+              </View>
+
               <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
@@ -148,33 +315,57 @@ export default function HomeScreen() {
                   isSelected={selectedCategory === null}
                   onPress={() => setSelectedCategory(null)}
                 />
+
                 {categories.map((cat: any) => (
                   <CategoryChip
                     key={cat.id}
                     label={cat.name}
                     iconName={cat.icon}
                     isSelected={selectedCategory === cat.id}
-                    onPress={() => setSelectedCategory(selectedCategory === cat.id ? null : cat.id)}
+                    onPress={() =>
+                      setSelectedCategory(
+                        selectedCategory === cat.id ? null : cat.id,
+                      )
+                    }
                   />
                 ))}
               </ScrollView>
             </View>
 
-            {/* Recent Items Title */}
+            {/* Recent items */}
             <View style={styles.feedHeaderRow}>
-              <Text style={styles.sectionTitle}>{t.items.recentItems}</Text>
-              <TouchableOpacity onPress={() => router.push('/(tabs)/search')}>
+              <View>
+                <Text style={styles.sectionTitle}>{t.items.recentItems}</Text>
+                <Text style={styles.feedSubtitle}>
+                  The latest items reported on campus
+                </Text>
+              </View>
+
+              <TouchableOpacity
+                accessibilityRole="button"
+                onPress={() => router.push("/(tabs)/search")}
+                style={styles.seeAllButton}
+                activeOpacity={0.7}
+              >
                 <Text style={styles.seeAllText}>{t.common.seeAll}</Text>
+                <Ionicons
+                  name="arrow-forward"
+                  size={15}
+                  color={colors.primary}
+                />
               </TouchableOpacity>
             </View>
-          </>
+          </View>
         }
         ListEmptyComponent={
           isLoading ? (
-            <LoadingSpinner message="Fetching campus lost & found feed..." />
+            <LoadingSpinner message="Loading campus items..." />
           ) : isError ? (
             <ErrorState
-              message={(error as any)?.message || 'Could not connect to the campus server'}
+              message={
+                (error as any)?.message ||
+                "Could not connect to the campus server."
+              }
               onRetry={refetch}
             />
           ) : (
@@ -183,7 +374,7 @@ export default function HomeScreen() {
               description="Be the first to report a lost or found item across Injibara University campus."
               icon="cube-outline"
               actionTitle="Report an Item"
-              onAction={() => router.push('/(tabs)/report')}
+              onAction={() => router.push("/(tabs)/report")}
             />
           )
         }
@@ -195,112 +386,341 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8FAFC'
+    backgroundColor: "#F5F7FC",
   },
   listContent: {
-    paddingHorizontal: spacing.md,
-    paddingBottom: spacing.xxl
+    flexGrow: 1,
+    paddingTop: 8,
+    paddingBottom: 36,
+  },
+  content: {
+    width: "100%",
+    alignSelf: "center",
+  },
+  contentWide: {
+    maxWidth: 1400,
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: spacing.md
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: 16,
+    marginBottom: 10,
   },
-  greeting: {
-    ...typography.h2,
-    color: colors.primary
+  brandRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 11,
   },
-  uniTag: {
-    ...typography.captionBold,
+  brandIcon: {
+    width: 46,
+    height: 46,
+    borderRadius: 15,
+    backgroundColor: colors.primary,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  brandTextContainer: {
+    flexShrink: 1,
+  },
+  brandName: {
+    fontSize: 17,
+    fontWeight: "800",
+    color: "#172B4D",
+    letterSpacing: -0.4,
+  },
+  brandSubtitle: {
+    marginTop: 3,
+    fontSize: 10,
+    fontWeight: "800",
+    letterSpacing: 1.3,
     color: colors.secondary,
-    letterSpacing: 0.5
   },
   avatarButton: {
-    padding: 2
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+  },
+  hero: {
+    backgroundColor: "#173D79",
+    borderRadius: 24,
+    padding: 22,
+    marginBottom: 20,
+    flexDirection: "row",
+    alignItems: "center",
+    overflow: "hidden",
+    ...shadows.md,
+  },
+  heroCopy: {
+    flex: 1,
+    zIndex: 1,
+  },
+  heroEyebrow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginBottom: 12,
+  },
+  heroEyebrowText: {
+    color: "#D7E9FF",
+    fontSize: 9,
+    fontWeight: "800",
+    letterSpacing: 1,
+  },
+  heroTitle: {
+    fontSize: 27,
+    lineHeight: 34,
+    fontWeight: "800",
+    color: "#FFFFFF",
+    letterSpacing: -0.8,
+  },
+  heroDescription: {
+    fontSize: 13,
+    lineHeight: 20,
+    color: "#E1EBFC",
+    marginTop: 8,
+    marginBottom: 18,
+    maxWidth: 460,
+  },
+  heroActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    flexWrap: "wrap",
+    gap: 10,
+  },
+  heroPrimaryButton: {
+    minHeight: 42,
+    paddingHorizontal: 13,
+    borderRadius: 12,
+    backgroundColor: "#FFFFFF",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 7,
+  },
+  heroPrimaryText: {
+    fontSize: 12,
+    fontWeight: "800",
+    color: "#173D79",
+  },
+  heroSecondaryButton: {
+    minHeight: 42,
+    paddingHorizontal: 8,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 7,
+  },
+  heroSecondaryText: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#FFFFFF",
+  },
+  heroIllustration: {
+    width: 105,
+    alignItems: "center",
+    justifyContent: "center",
+    marginLeft: 5,
+  },
+  heroCircle: {
+    width: 88,
+    height: 88,
+    borderRadius: 44,
+    backgroundColor: "#315B96",
+    borderWidth: 1,
+    borderColor: "#6F90C0",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  heroCheck: {
+    position: "absolute",
+    right: -1,
+    bottom: 0,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: "#B9F3D4",
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 2,
+    borderColor: "#173D79",
   },
   searchBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1.2,
-    borderColor: colors.border,
-    borderRadius: borderRadius.lg,
-    paddingHorizontal: spacing.md,
-    height: 48,
-    marginBottom: spacing.md,
-    ...shadows.sm
+    minHeight: 54,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#E3E8F1",
+    borderRadius: 15,
+    paddingLeft: 16,
+    paddingRight: 8,
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 25,
+    gap: 11,
+    ...shadows.sm,
   },
   searchPlaceholder: {
-    ...typography.body,
-    color: colors.textMuted,
     flex: 1,
-    marginLeft: 10
+    color: "#8995A8",
+    fontSize: 13,
   },
-  statsBanner: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: borderRadius.lg,
-    borderWidth: 1,
-    borderColor: colors.border,
-    padding: spacing.md,
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: spacing.lg,
-    ...shadows.sm
-  },
-  statsCol: {
-    alignItems: 'center',
-    paddingHorizontal: spacing.md
-  },
-  statsNumber: {
-    ...typography.h2,
-    color: colors.primary
-  },
-  statsLabel: {
-    ...typography.caption,
-    color: colors.textSecondary
-  },
-  statsDivider: {
-    width: 1,
+  filterIcon: {
+    width: 38,
     height: 38,
-    backgroundColor: colors.border,
-    marginHorizontal: spacing.sm
+    borderRadius: 11,
+    backgroundColor: "#EDF3FF",
+    alignItems: "center",
+    justifyContent: "center",
   },
-  statsActions: {
-    flex: 1,
-    flexDirection: 'row',
-    justifyContent: 'space-around'
+  statsSection: {
+    marginBottom: 27,
   },
-  quickButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: borderRadius.md
-  },
-  quickButtonText: {
-    ...typography.captionBold,
-    marginLeft: 4
-  },
-  categorySection: {
-    marginBottom: spacing.md
+  sectionHeadingRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 13,
+    gap: 10,
   },
   sectionTitle: {
-    ...typography.h3,
-    color: colors.textPrimary,
-    marginBottom: spacing.sm
+    fontSize: 18,
+    fontWeight: "800",
+    color: "#172B4D",
+    letterSpacing: -0.4,
+  },
+  liveBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 20,
+    backgroundColor: "#E6F7EE",
+  },
+  liveDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: "#168455",
+  },
+  liveBadgeText: {
+    fontSize: 10,
+    fontWeight: "700",
+    color: "#168455",
+  },
+  statsGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 12,
+  },
+  statCard: {
+    flexGrow: 1,
+    flexBasis: 0,
+    minWidth: 145,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#E7ECF4",
+    borderRadius: 18,
+    padding: 15,
+    minHeight: 150,
+    ...shadows.sm,
+  },
+  statIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 13,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 12,
+  },
+  statNumber: {
+    fontSize: 26,
+    lineHeight: 32,
+    fontWeight: "800",
+    color: "#172B4D",
+  },
+  statLabel: {
+    fontSize: 11,
+    color: "#738097",
+    marginTop: 3,
+  },
+  statActionTitle: {
+    fontSize: 12,
+    lineHeight: 17,
+    fontWeight: "800",
+    color: "#263852",
+  },
+  statActionDescription: {
+    fontSize: 10,
+    lineHeight: 15,
+    color: "#738097",
+    marginTop: 3,
+  },
+  statActionLink: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    marginTop: 9,
+  },
+  statActionLinkText: {
+    color: "#C45B2C",
+    fontSize: 11,
+    fontWeight: "800",
+  },
+  foundActionText: {
+    color: "#168455",
+    fontSize: 11,
+    fontWeight: "800",
+  },
+  categorySection: {
+    marginBottom: 28,
   },
   categoryScroll: {
-    paddingRight: spacing.md
+    paddingRight: 8,
+    gap: 8,
   },
   feedHeaderRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: spacing.sm
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    gap: 12,
+    marginBottom: 15,
+  },
+  feedSubtitle: {
+    color: "#8290A4",
+    fontSize: 11,
+    marginTop: 5,
+  },
+  seeAllButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    paddingVertical: 8,
+    paddingLeft: 8,
   },
   seeAllText: {
-    ...typography.captionBold,
-    color: colors.secondary
-  }
+    color: colors.primary,
+    fontSize: 12,
+    fontWeight: "800",
+  },
+  itemRow: {
+    alignItems: "stretch",
+    gap: 14,
+  },
+  itemWrapper: {
+    width: "100%",
+    marginBottom: 14,
+  },
+  itemWrapperTablet: {
+    flex: 1,
+    minWidth: 0,
+  },
+  itemWrapperWide: {
+    flex: 1,
+    minWidth: 0,
+  },
 });

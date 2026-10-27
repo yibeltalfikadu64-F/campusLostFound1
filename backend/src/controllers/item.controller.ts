@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from 'express';
+﻿import { Request, Response, NextFunction } from 'express';
 import { AuthenticatedRequest } from '../types';
 import { itemService } from '../services/item.service';
 import { claimService } from '../services/claim.service';
@@ -10,7 +10,7 @@ export class ItemController {
       const item = await itemService.createItem(req.user!.id, req.body);
       return sendSuccess(res, item, 'Item reported successfully', 201);
     } catch (error) {
-      next(error);
+      return next(error);
     }
   }
 
@@ -19,7 +19,7 @@ export class ItemController {
       const result = await itemService.listItems(req.query as any);
       return sendSuccess(res, result.items, 'Items retrieved successfully', 200, result.meta);
     } catch (error) {
-      next(error);
+      return next(error);
     }
   }
 
@@ -28,7 +28,7 @@ export class ItemController {
       const item = await itemService.getItemById(req.params.id, req.user);
       return sendSuccess(res, item, 'Item details retrieved');
     } catch (error) {
-      next(error);
+      return next(error);
     }
   }
 
@@ -37,7 +37,7 @@ export class ItemController {
       const updated = await itemService.updateItem(req.params.id, req.user!, req.body);
       return sendSuccess(res, updated, 'Item updated successfully');
     } catch (error) {
-      next(error);
+      return next(error);
     }
   }
 
@@ -46,7 +46,7 @@ export class ItemController {
       const result = await itemService.deleteItem(req.params.id, req.user!);
       return sendSuccess(res, result, 'Item deleted successfully');
     } catch (error) {
-      next(error);
+      return next(error);
     }
   }
 
@@ -56,7 +56,7 @@ export class ItemController {
       const updated = await itemService.updateItemStatus(req.params.id, req.user!, status, reason);
       return sendSuccess(res, updated, 'Item status updated');
     } catch (error) {
-      next(error);
+      return next(error);
     }
   }
 
@@ -65,7 +65,7 @@ export class ItemController {
       const history = await itemService.getItemHistory(req.params.id);
       return sendSuccess(res, history, 'Item status history retrieved');
     } catch (error) {
-      next(error);
+      return next(error);
     }
   }
 
@@ -74,7 +74,7 @@ export class ItemController {
       const claim = await claimService.submitClaim(req.user!.id, req.params.id, req.body);
       return sendSuccess(res, claim, 'Claim submitted successfully', 201);
     } catch (error) {
-      next(error);
+      return next(error);
     }
   }
 
@@ -83,7 +83,7 @@ export class ItemController {
       const claims = await itemService.getItemClaims(req.params.id, req.user!);
       return sendSuccess(res, claims, 'Item claims retrieved');
     } catch (error) {
-      next(error);
+      return next(error);
     }
   }
 
@@ -96,9 +96,10 @@ export class ItemController {
       });
       return sendSuccess(res, { imageUrls: urls }, 'Images uploaded successfully', 201);
     } catch (error) {
-      next(error);
+      return next(error);
     }
   }
 }
 
 export const itemController = new ItemController();
+

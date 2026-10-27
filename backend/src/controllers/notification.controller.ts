@@ -1,4 +1,4 @@
-import { Response, NextFunction } from 'express';
+﻿import { Response, NextFunction } from 'express';
 import { AuthenticatedRequest } from '../types';
 import { notificationService } from '../services/notification.service';
 import { sendSuccess } from '../utils/response';
@@ -9,7 +9,7 @@ export class NotificationController {
       const notifications = await notificationService.getUserNotifications(req.user!.id);
       return sendSuccess(res, notifications, 'Notifications retrieved');
     } catch (error) {
-      next(error);
+      return next(error);
     }
   }
 
@@ -18,7 +18,7 @@ export class NotificationController {
       await notificationService.markAsRead(req.params.id, req.user!.id);
       return sendSuccess(res, null, 'Notification marked as read');
     } catch (error) {
-      next(error);
+      return next(error);
     }
   }
 
@@ -27,9 +27,10 @@ export class NotificationController {
       await notificationService.markAllAsRead(req.user!.id);
       return sendSuccess(res, null, 'All notifications marked as read');
     } catch (error) {
-      next(error);
+      return next(error);
     }
   }
 }
 
 export const notificationController = new NotificationController();
+

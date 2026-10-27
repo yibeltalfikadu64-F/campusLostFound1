@@ -1,4 +1,4 @@
-import { Response, NextFunction } from 'express';
+﻿import { Response, NextFunction } from 'express';
 import { AuthenticatedRequest } from '../types';
 import { claimService } from '../services/claim.service';
 import { sendSuccess } from '../utils/response';
@@ -9,7 +9,7 @@ export class ClaimController {
       const claims = await claimService.getMyClaims(req.user!.id);
       return sendSuccess(res, claims, 'User claims retrieved');
     } catch (error) {
-      next(error);
+      return next(error);
     }
   }
 
@@ -18,7 +18,7 @@ export class ClaimController {
       const claim = await claimService.getClaimById(req.params.id, req.user!);
       return sendSuccess(res, claim, 'Claim details retrieved');
     } catch (error) {
-      next(error);
+      return next(error);
     }
   }
 
@@ -28,7 +28,7 @@ export class ClaimController {
       const result = await claimService.approveClaim(req.params.id, req.user!, reviewNote);
       return sendSuccess(res, result, 'Claim approved successfully');
     } catch (error) {
-      next(error);
+      return next(error);
     }
   }
 
@@ -38,7 +38,7 @@ export class ClaimController {
       const result = await claimService.rejectClaim(req.params.id, req.user!, reviewNote);
       return sendSuccess(res, result, 'Claim rejected');
     } catch (error) {
-      next(error);
+      return next(error);
     }
   }
 
@@ -47,7 +47,7 @@ export class ClaimController {
       const result = await claimService.scheduleHandover(req.params.id, req.user!, req.body);
       return sendSuccess(res, result, 'Handover scheduled successfully');
     } catch (error) {
-      next(error);
+      return next(error);
     }
   }
 
@@ -56,9 +56,10 @@ export class ClaimController {
       const result = await claimService.confirmReturn(req.params.id, req.user!);
       return sendSuccess(res, result, 'Item confirmed returned and case closed');
     } catch (error) {
-      next(error);
+      return next(error);
     }
   }
 }
 
 export const claimController = new ClaimController();
+

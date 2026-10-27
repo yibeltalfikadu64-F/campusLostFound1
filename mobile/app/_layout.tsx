@@ -14,7 +14,7 @@ export default function RootLayout() {
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
           <I18nProvider>
-            <StatusBar style="light" backgroundColor="#0F2C59" />
+            <StatusBar style="light" />
             <OfflineBanner />
             <Stack
               screenOptions={{
