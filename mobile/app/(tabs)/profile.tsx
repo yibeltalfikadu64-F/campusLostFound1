@@ -112,7 +112,38 @@ export default function ProfileScreen() {
     }
   };
 
+  
   const handleLogout = () => {
+    const performLogout = async () => {
+      try {
+        await logout();
+        router.replace("/(auth)/welcome");
+      } catch (error) {
+        console.error("Logout failed:", error);
+
+        if (Platform.OS === "web") {
+          window.alert("Unable to sign out. Please try again.");
+        } else {
+          Alert.alert(
+            "Sign out failed",
+            "Unable to sign out. Please try again.",
+          );
+        }
+      }
+    };
+
+    if (Platform.OS === "web") {
+      const confirmed = window.confirm(
+        "Are you sure you want to sign out of your Injibara University campus account?",
+      );
+
+      if (confirmed) {
+        void performLogout();
+      }
+
+      return;
+    }
+
     Alert.alert(
       "Sign out",
       "Are you sure you want to sign out of your Injibara University campus account?",
@@ -124,21 +155,14 @@ export default function ProfileScreen() {
         {
           text: "Sign out",
           style: "destructive",
-          onPress: async () => {
-            try {
-              await logout();
-              router.replace("/(auth)/welcome");
-            } catch {
-              Alert.alert(
-                "Sign out failed",
-                "Unable to sign out right now. Please try again.",
-              );
-            }
+          onPress: () => {
+            void performLogout();
           },
         },
       ],
     );
   };
+
 
   const showPrivacyNotice = () => {
     Alert.alert(

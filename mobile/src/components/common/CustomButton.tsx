@@ -1,19 +1,20 @@
-import React from 'react';
+import React from "react";
 import {
   TouchableOpacity,
   Text,
   ActivityIndicator,
   StyleSheet,
   ViewStyle,
-  TextStyle
-} from 'react-native';
-import { colors, borderRadius, typography } from '../../theme';
+  TextStyle,
+  View,
+} from "react-native";
+import { colors, borderRadius, typography } from "../../theme";
 
 interface CustomButtonProps {
   title: string;
   onPress: () => void;
-  variant?: 'primary' | 'secondary' | 'outline' | 'danger';
-  size?: 'sm' | 'md' | 'lg';
+  variant?: "primary" | "secondary" | "outline" | "danger";
+  size?: "sm" | "md" | "lg";
   loading?: boolean;
   disabled?: boolean;
   style?: ViewStyle;
@@ -24,102 +25,105 @@ interface CustomButtonProps {
 export const CustomButton: React.FC<CustomButtonProps> = ({
   title,
   onPress,
-  variant = 'primary',
-  size = 'md',
+  variant = "primary",
+  size = "md",
   loading = false,
   disabled = false,
   style,
   textStyle,
-  icon
+  icon,
 }) => {
-  const getVariantStyles = (): { button: ViewStyle; text: TextStyle } => {
+  const variantStyles = (() => {
     switch (variant) {
-      case 'secondary':
+      case "secondary":
         return {
           button: { backgroundColor: colors.secondary },
-          text: { color: colors.textInverse }
+          text: { color: colors.textInverse },
         };
-      case 'outline':
+      case "outline":
         return {
           button: {
-            backgroundColor: 'transparent',
+            backgroundColor: "transparent",
             borderWidth: 1.5,
-            borderColor: colors.primary
+            borderColor: colors.primary,
           },
-          text: { color: colors.primary }
+          text: { color: colors.primary },
         };
-      case 'danger':
+      case "danger":
         return {
           button: { backgroundColor: colors.danger },
-          text: { color: colors.textInverse }
+          text: { color: colors.textInverse },
         };
-      case 'primary':
       default:
         return {
           button: { backgroundColor: colors.primary },
-          text: { color: colors.textInverse }
+          text: { color: colors.textInverse },
         };
     }
-  };
+  })();
 
-  const getSizeStyles = (): { button: ViewStyle; text: TextStyle } => {
+  const sizeStyles = (() => {
     switch (size) {
-      case 'sm':
+      case "sm":
         return {
           button: { paddingVertical: 8, paddingHorizontal: 12 },
-          text: { fontSize: 13 }
+          text: { fontSize: 13 },
         };
-      case 'lg':
+      case "lg":
         return {
           button: { paddingVertical: 16, paddingHorizontal: 24 },
-          text: { fontSize: 16 }
+          text: { fontSize: 16 },
         };
-      case 'md':
       default:
         return {
           button: { paddingVertical: 12, paddingHorizontal: 18 },
-          text: { fontSize: 14 }
+          text: { fontSize: 14 },
         };
     }
-  };
+  })();
 
-  const variantStyles = getVariantStyles();
-  const sizeStyles = getSizeStyles();
+  const isDisabled = disabled || loading;
 
   return (
     <TouchableOpacity
-      activeOpacity={0.8}
+      activeOpacity={0.7}
       onPress={onPress}
-      disabled={disabled || loading}
+      disabled={isDisabled}
+      accessibilityRole="button"
+      accessibilityLabel={title}
+      accessibilityState={{
+        disabled: isDisabled,
+        busy: loading,
+      }}
       style={[
         styles.baseButton,
         variantStyles.button,
         sizeStyles.button,
-        disabled && styles.disabledButton,
-        style
+        isDisabled && styles.disabledButton,
+        style,
       ]}
     >
       {loading ? (
         <ActivityIndicator
           size="small"
-          color={variant === 'outline' ? colors.primary : colors.textInverse}
+          color={variant === "outline" ? colors.primary : colors.textInverse}
         />
       ) : (
-        <>
+        <View style={styles.content}>
           {icon}
           <Text
             style={[
               styles.baseText,
               variantStyles.text,
               sizeStyles.text,
-              disabled && styles.disabledText,
-              icon ? { marginLeft: 8 } : {},
-              textStyle
+              isDisabled && styles.disabledText,
+              icon ? styles.iconSpacing : undefined,
+              textStyle,
             ]}
           >
             {title}
           </Text>
-        </>
+        </View>
       )}
     </TouchableOpacity>
   );
@@ -127,20 +131,27 @@ export const CustomButton: React.FC<CustomButtonProps> = ({
 
 const styles = StyleSheet.create({
   baseButton: {
+    minHeight: 44,
     borderRadius: borderRadius.md,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center'
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  content: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
   },
   baseText: {
     ...typography.button,
-    textAlign: 'center'
+    textAlign: "center",
+  },
+  iconSpacing: {
+    marginLeft: 8,
   },
   disabledButton: {
-    backgroundColor: colors.disabled,
-    borderColor: colors.disabled
+    opacity: 0.55,
   },
   disabledText: {
-    color: colors.disabledText
-  }
+    color: colors.disabledText,
+  },
 });
